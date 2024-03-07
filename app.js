@@ -11,6 +11,7 @@ const upload = multer({storage : storage})
 
 // cors package 
 const cors = require('cors')
+const { error } = require('console')
 
 
 app.use(cors({
@@ -37,7 +38,7 @@ app.post("/book",upload.single("image") ,async(req,res)=>{
     if(!req.file){
         fileName = "https://cdn.vectorstock.com/i/preview-1x/77/30/default-avatar-profile-icon-grey-photo-placeholder-vector-17317730.jpg"
     }else{
-       fileName = "https://mern2-0-backend.onrender.com/" + req.file.filename
+       fileName = "http://localhost:3000/" + req.file.filename
     }
    const {bookName,bookPrice,isbnNumber,authorName,publishedAt,publication} = req.body
    await Book.create({
@@ -83,7 +84,21 @@ app.get("/book/:id",async(req,res)=>{
 //delete operation 
 app.delete("/book/:id",async(req,res)=>{
     const id = req.params.id
+    const existingBook=await Book.findById(id)
+    // console.log(existingBook)
+    const image = existingBook.imageUrl
+    const backendUrlLenght = "http://localhost:3000/".length
+    const newImage = image.slice(backendUrlLenght)
+    fs.unlink(`storage/${newImage}`, (err) => {
+        if(err){return console.log(err)}
+        else{console.log("Image successfully deleted")}
+    })
+
+
+    
+    
    await Book.findByIdAndDelete(id)
+
    res.status(200).json({
         message : "Book Deleted Successfully"
    })
@@ -124,6 +139,9 @@ app.patch("/book/:id",upload.single('image'), async (req,res)=>{
         message : "Book Updated Successfully"
     })
 })
+
+
+
 
 app.use(express.static("./storage/"))
 
