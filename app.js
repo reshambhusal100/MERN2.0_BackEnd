@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const fs = require("fs");
 const connectToDatabase = require("./database");
+require("dotenv").config()
 const Book = require("./model/bookModel");
 // multerconfig imports
 const { multer, storage } = require("./middleware/multerConfig");
@@ -11,8 +12,6 @@ const upload = multer({ storage: storage });
 
 // cors package
 const cors = require("cors");
-const { error } = require("console");
-
 app.use(
   cors({
     origin: "*",
@@ -21,7 +20,7 @@ app.use(
 
 app.use(express.json());
 
-connectToDatabase();
+connectToDatabase(process.env.ConnectionString);
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -36,7 +35,7 @@ app.post("/book", upload.single("image"), async (req, res) => {
     fileName =
       "https://cdn.vectorstock.com/i/preview-1x/77/30/default-avatar-profile-icon-grey-photo-placeholder-vector-17317730.jpg";
   } else {
-    fileName = "http://localhost:3000/" + req.file.filename;
+    fileName = process.env.backendUrl + req.file.filename;
   }
   const {
     bookName,
@@ -102,7 +101,7 @@ app.delete("/book/:id", async (req, res) => {
   const existingBook = await Book.findById(id);
   // console.log(existingBook)
   const image = existingBook.imageUrl;
-  const backendUrlLenght = "http://localhost:3000/".length;
+  const backendUrlLenght = process.env.backendUrl.length;
   const newImage = image.slice(backendUrlLenght);
   //Delete image form storage!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   fs.unlink(`storage/${newImage}`, (err) => {
@@ -136,7 +135,7 @@ app.patch("/book/:id", upload.single("image"), async (req, res) => {
   if (req.file) {
     const oldImagePath = oldDatas.imageUrl;
     console.log(oldImagePath);
-    const localHostUrlLength = "http://localhost:3000/".length;
+    const localHostUrlLength = process.env.backendUrl.length;
     const newOldImagePath = oldImagePath.slice(localHostUrlLength);
     console.log(newOldImagePath);
     fs.unlink(`storage/${newOldImagePath}`, (err) => {
@@ -146,7 +145,7 @@ app.patch("/book/:id", upload.single("image"), async (req, res) => {
         console.log("File Deleted Successfully");
       }
     });
-    fileName = "http://localhost:3000/" + req.file.filename;
+    fileName = process.env.backendUrl + req.file.filename;
   }
   await Book.findByIdAndUpdate(id, {
     bookName: bookName,
